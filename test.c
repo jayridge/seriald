@@ -128,7 +128,7 @@ static void do_sum(int argc, char **argv)
         while(bson_iterator_next(&i)){
             if (strcmp(argv[3], bson_iterator_key(&i)) == 0) {
                 val = bson_iterator_double(&i);
-                printf("%f\n", val);
+                //printf("%f\n", val);
                 sum += val;
             }
         }
