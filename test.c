@@ -59,11 +59,11 @@ static void do_import(int argc, char **argv)
     iov[0].iov_len = sizeof(int);
     iov[1].iov_base = (caddr_t) &prev_sz;
     iov[1].iov_len = sizeof(int);
-    iov[2].iov_base = b;
 
     while (fgets(line, BUFSZ, fp)) {
         if ((b = json_to_bson(line, &size))) {
             print_stats(stderr, 0);
+            iov[2].iov_base = b;
             iov[2].iov_len = size;
             rc = writev(fd, iov, 3);
             prev_sz = size;
@@ -103,9 +103,10 @@ static void do_read(int argc, char **argv)
 
 static void do_sum(int argc, char **argv)
 {
-    int fd, size, prev_sz;
+    int fd, size, prev_sz, keyc;
     struct iovec iov[2];
     char buf[1024*32];
+    char **keyv;
     bson_iterator i;
     double val, sum=0;
 
@@ -117,20 +118,15 @@ static void do_sum(int argc, char **argv)
         exit(errno);
     }
 
+    keyv = srld_key_to_argv(argv[3], &keyc);
     iov[0].iov_base = (caddr_t) &size;
     iov[0].iov_len = sizeof(int);
     iov[1].iov_base = (caddr_t) &prev_sz;
     iov[1].iov_len = sizeof(int);
     while (readv(fd, iov, 2)) {
-        buf[0] = '\0';
-        read(fd, buf, size);
-        bson_iterator_init(&i, buf);
-        while(bson_iterator_next(&i)){
-            if (strcmp(argv[3], bson_iterator_key(&i)) == 0) {
-                val = bson_iterator_double(&i);
-                //printf("%f\n", val);
-                sum += val;
-            }
+        if (read(fd, buf, size) == size && srld_find(&i, keyc, keyv, buf, 0)) {
+            val = bson_iterator_double(&i);
+            sum += val;
         }
     }
     printf("sum: %f\n", sum);
