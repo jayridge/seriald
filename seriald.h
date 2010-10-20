@@ -39,5 +39,11 @@ typedef struct DBFILE {
 } DBFILE;
 
 
+// json.c
 char * json_to_bson(char *js, int *size);
+
+// core.c
+char **srld_key_to_argv(char *key, int *nkeys);
+void srld_argv_free(char **argv);
+int srld_find(bson_iterator *i, int keyc, char **keyv, char *data, int depth);
 

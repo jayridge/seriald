@@ -33,6 +33,7 @@ void usage()
     fprintf(stderr, "  %s import db json_file\n", progname);
     fprintf(stderr, "  %s dump db\n", progname);
     fprintf(stderr, "  %s sum db key\n", progname);
+    fprintf(stderr, "  %s find db key\n", progname);
     fprintf(stderr, "\n");
     exit(1);
 }
@@ -43,8 +44,7 @@ static void do_import(int argc, char **argv)
 #define BUFSZ 1024*32
     char line[BUFSZ], *b;
     struct iovec iov[3];
-    int rc, fd, size=0;
-    uint32_t prev_sz = 0;
+    int rc, fd, size=0, prev_sz=0;
 
     if (argc != 4) usage();
     fp = fopen(argv[3], "r");
@@ -54,14 +54,16 @@ static void do_import(int argc, char **argv)
         fprintf(stderr,"open(%s) failed: %s\n", argv[2], strerror(errno));
         exit(errno);
     }
+
+    iov[0].iov_base = (caddr_t) &size;
+    iov[0].iov_len = sizeof(int);
+    iov[1].iov_base = (caddr_t) &prev_sz;
+    iov[1].iov_len = sizeof(int);
+    iov[2].iov_base = b;
+
     while (fgets(line, BUFSZ, fp)) {
         if ((b = json_to_bson(line, &size))) {
             print_stats(stderr, 0);
-            iov[0].iov_base = (caddr_t) &size;
-            iov[0].iov_len = sizeof(int);
-            iov[1].iov_base = (caddr_t) &prev_sz;
-            iov[1].iov_len = sizeof(int);
-            iov[2].iov_base = b;
             iov[2].iov_len = size;
             rc = writev(fd, iov, 3);
             prev_sz = size;
@@ -95,9 +97,7 @@ static void do_read(int argc, char **argv)
         fprintf(stdout, "size: %d\nprev: %d\n", size, prev_sz);
         read(fd, buf, size);
         bson_print_raw(buf, 1);
-
     }
-
     close(fd);
 }
 
@@ -138,6 +138,50 @@ static void do_sum(int argc, char **argv)
     close(fd);
 }
 
+
+static void do_find(int argc, char **argv)
+{
+    int fd, size, prev_sz, keyc;
+    struct iovec iov[2];
+    char buf[1024*32];
+    char **keyv;
+    bson_iterator i;
+
+
+    if (argc != 4) usage();
+    fd = open(argv[2], O_RDONLY);
+    if (fd < 0) {
+        fprintf(stderr,"open(%s) failed: %s\n", argv[2], strerror(errno));
+        exit(errno);
+    }
+
+    keyv = srld_key_to_argv(argv[3], &keyc);
+    iov[0].iov_base = (caddr_t) &size;
+    iov[0].iov_len = sizeof(int);
+    iov[1].iov_base = (caddr_t) &prev_sz;
+    iov[1].iov_len = sizeof(int);
+    while (readv(fd, iov, 2)) {
+        if (read(fd, buf, size) == size && srld_find(&i, keyc, keyv, buf, 0)) {
+            bson_type t = bson_iterator_type(&i);
+            switch (t) {
+                case bson_int: printf("%d\n" ,bson_iterator_int(&i)); break;
+                case bson_double: printf("%f\n" ,bson_iterator_double(&i)); break;
+                case bson_bool: printf("%s\n" ,bson_iterator_bool(&i) ? "true" : "false"); break;
+                case bson_string: printf("%s\n" ,bson_iterator_string(&i)); break;
+                case bson_null: printf("null\n"); break;
+                case bson_oid:
+                case bson_object:
+                case bson_array:
+                default:
+                    fprintf(stderr ,"can't print type : %d\n" ,t);
+            }
+        }
+    }
+    srld_argv_free(keyv);
+
+    close(fd);
+}
+
 int main(int argc, char **argv)
 {
     progname = argv[0];
@@ -147,6 +191,8 @@ int main(int argc, char **argv)
         do_read(argc, argv);
     } else if(argc > 1 && !strcmp(argv[1], "sum")){
         do_sum(argc, argv);
+    } else if(argc > 1 && !strcmp(argv[1], "find")){
+        do_find(argc, argv);
     } else {
         usage();
     }

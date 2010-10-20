@@ -7,7 +7,7 @@ AR_FLAGS = rc
 RANLIB = ranlib
 
 srldtest: test.c json.c
-	$(CC) $(CFLAGS) -o $@ test.c json.c $(LIBS)
+	$(CC) $(CFLAGS) -o $@ test.c json.c core.c $(LIBS)
 
 all: srldtest
 
