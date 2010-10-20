@@ -1,0 +1,24 @@
+License
+-------
+Attribution-NonCommercial-NoDerivs 3.0 Unported
+( http://creativecommons.org/licenses/by-nc-nd/3.0/legalcode )
+
+Copyright 2010 Jay Ridgeway, e-real inc
+
+
+Requires
+--------
+1. json-c ( http://oss.metaparadigm.com/json-c/ )
+2. mongo-c-driver ( http://github.com/mongodb/mongo-c-driver )
+3. tcl ( http://tcl.tk/ )
+
+
+Usage
+-----
+./srldtest: Test program for seriald.
+
+usage:
+  ./srldtest import db json_file
+  ./srldtest dump db
+  ./srldtest sum db key
+
