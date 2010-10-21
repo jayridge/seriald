@@ -233,6 +233,7 @@ static void do_group(int argc, char **argv)
       count = (int *)tcmapget(counts, key, strlen(key), &size);
       fprintf(stderr, "%s: %d\n", key, *count);
     }
+    tcmapdel(counts);
 }
 
 int main(int argc, char **argv)
