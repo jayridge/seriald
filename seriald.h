@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <tcutil.h>
 
 #include "mongo.h"
 #include "json/json.h"

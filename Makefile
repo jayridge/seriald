@@ -1,7 +1,7 @@
 BSON ?= ../src/mongo-c-driver
 
 CFLAGS = -DMONGO_HAVE_STDINT -I. -I$(BSON)/src -Wall -g -std=c99
-LIBS = -L. -L$(BSON) -ljson -lbson -ltcl
+LIBS = -L. -L$(BSON) -ljson -lbson -ltcl -ltokyocabinet
 AR = ar
 AR_FLAGS = rc
 RANLIB = ranlib

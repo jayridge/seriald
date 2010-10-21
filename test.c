@@ -34,6 +34,7 @@ void usage()
     fprintf(stderr, "  %s dump db\n", progname);
     fprintf(stderr, "  %s sum db key\n", progname);
     fprintf(stderr, "  %s find db key\n", progname);
+    fprintf(stderr, "  %s group db key\n", progname);
     fprintf(stderr, "\n");
     exit(1);
 }
@@ -143,7 +144,6 @@ static void do_find(int argc, char **argv)
     char **keyv;
     bson_iterator i;
 
-
     if (argc != 4) usage();
     fd = open(argv[2], O_RDONLY);
     if (fd < 0) {
@@ -178,6 +178,63 @@ static void do_find(int argc, char **argv)
     close(fd);
 }
 
+
+static void do_group(int argc, char **argv)
+{
+    int fd, size, prev_sz, keyc;
+    struct iovec iov[2];
+    char buf[1024*32];
+    char **keyv;
+    bson_iterator i;
+    TCMAP *counts;
+    int *count;
+    const char *key;
+    
+    counts = tcmapnew();
+    
+    if (argc != 4) usage();
+    fd = open(argv[2], O_RDONLY);
+    if (fd < 0) {
+        fprintf(stderr,"open(%s) failed: %s\n", argv[2], strerror(errno));
+        exit(errno);
+    }
+
+    keyv = srld_key_to_argv(argv[3], &keyc);
+    iov[0].iov_base = (caddr_t) &size;
+    iov[0].iov_len = sizeof(int);
+    iov[1].iov_base = (caddr_t) &prev_sz;
+    iov[1].iov_len = sizeof(int);
+    while (readv(fd, iov, 2)) {
+        if (read(fd, buf, size) == size && srld_find(&i, keyc, keyv, buf, 0)) {
+            bson_type t = bson_iterator_type(&i);
+            switch (t) {
+                case bson_int: printf("%d\n" ,bson_iterator_int(&i)); break;
+                case bson_double: printf("%f\n" ,bson_iterator_double(&i)); break;
+                case bson_bool: printf("%s\n" ,bson_iterator_bool(&i) ? "true" : "false"); break;
+                case bson_string: 
+                  tcmapaddint(counts, bson_iterator_string(&i), strlen(bson_iterator_string(&i)), 1);
+                  break;
+                printf("%s\n" ,bson_iterator_string(&i)); break;
+                case bson_null: printf("null\n"); break;
+                case bson_oid:
+                case bson_object:
+                case bson_array:
+                default:
+                    fprintf(stderr ,"can't print type : %d\n" ,t);
+            }
+        }
+    }
+    srld_argv_free(keyv);
+
+    close(fd);
+    
+    tcmapiterinit(counts);
+    while((key = tcmapiternext2(counts)) != NULL) {
+      count = (int *)tcmapget(counts, key, strlen(key), &size);
+      fprintf(stderr, "%s: %d\n", key, *count);
+    }
+}
+
 int main(int argc, char **argv)
 {
     progname = argv[0];
@@ -189,6 +246,8 @@ int main(int argc, char **argv)
         do_sum(argc, argv);
     } else if(argc > 1 && !strcmp(argv[1], "find")){
         do_find(argc, argv);
+    } else if(argc > 1 && !strcmp(argv[1], "group")){
+        do_group(argc, argv);
     } else {
         usage();
     }
