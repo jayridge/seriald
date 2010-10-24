@@ -6,6 +6,11 @@ AR = ar
 AR_FLAGS = rc
 RANLIB = ranlib
 
+libsrld: database.o iterator.o
+	/bin/rm -f $@
+	$(AR) $(AR_FLAGS) $@ $<
+	$(RANLIB) $@
+
 srldtest: test.c json.c
 	$(CC) $(CFLAGS) -o $@ test.c json.c core.c $(LIBS)
 
