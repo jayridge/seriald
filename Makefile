@@ -6,15 +6,15 @@ AR = ar
 AR_FLAGS = rc
 RANLIB = ranlib
 
-libsrld: database.o iterator.o
+libsrld.a: database.o iterator.o
 	/bin/rm -f $@
-	$(AR) $(AR_FLAGS) $@ $<
+	$(AR) $(AR_FLAGS) $@ $^
 	$(RANLIB) $@
 
-srldtest: test.c json.c
-	$(CC) $(CFLAGS) -o $@ test.c json.c core.c $(LIBS)
+srldtest: test.o json.o core.o
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
-all: srldtest
+all: libsrld.a srldtest
 
 clean:
 	rm -rf *.a *.o srldtest *.dSYM

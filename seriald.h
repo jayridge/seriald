@@ -16,13 +16,19 @@
 #define SRLD_OK 0
 #define SRLD_ERROR 1
 
-#define INITIAL_DATA_SIZE 1024*8
+#define SLAB_SIZE 1024*1024*1024
+
+#define ID "SRLD"
+#define VERSION 0
 
 typedef struct srld_db_header {
+    char id[4];
+    uint8_t version;
     uint64_t nrecords;
     struct timeval min_time;
     struct timeval max_time;
-    uint64_t last;
+    off_t last_record_offset;
+    off_t end_of_data_offset;
 } srld_db_header;
 
 typedef struct srld_stat {
@@ -68,7 +74,6 @@ int srld_db_seek( srld_db *db, off_t offset, int whence );
 void srld_iterator_init( srld_db *db, srld_iterator *iterator );
 srld_record * srld_next( srld_iterator *iterator );
 srld_record * srld_previous( srld_iterator *iterator );
-off_t srld_tell( srld_iterator *iterator );
 
 
 // ----------- old --------------

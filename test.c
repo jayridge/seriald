@@ -161,9 +161,12 @@ static void do_find(int argc, char **argv)
             bson_type t = bson_iterator_type(&i);
             switch (t) {
                 case bson_int: printf("%d\n" ,bson_iterator_int(&i)); break;
-                case bson_double: printf("%f\n" ,bson_iterator_double(&i)); break;
-                case bson_bool: printf("%s\n" ,bson_iterator_bool(&i) ? "true" : "false"); break;
-                case bson_string: printf("%s\n" ,bson_iterator_string(&i)); break;
+                case bson_double: printf("%f\n" ,bson_iterator_double(&i));
+break;
+                case bson_bool: printf("%s\n" ,bson_iterator_bool(&i) ? "true" :
+"false"); break;
+                case bson_string: printf("%s\n" ,bson_iterator_string(&i));
+break;
                 case bson_null: printf("null\n"); break;
                 case bson_oid:
                 case bson_object:
@@ -209,10 +212,13 @@ static void do_group(int argc, char **argv)
             bson_type t = bson_iterator_type(&i);
             switch (t) {
                 case bson_int: printf("%d\n" ,bson_iterator_int(&i)); break;
-                case bson_double: printf("%f\n" ,bson_iterator_double(&i)); break;
-                case bson_bool: printf("%s\n" ,bson_iterator_bool(&i) ? "true" : "false"); break;
+                case bson_double: printf("%f\n" ,bson_iterator_double(&i));
+break;
+                case bson_bool: printf("%s\n" ,bson_iterator_bool(&i) ? "true" :
+"false"); break;
                 case bson_string: 
-                  tcmapaddint(counts, bson_iterator_string(&i), strlen(bson_iterator_string(&i)), 1);
+                  tcmapaddint(counts, bson_iterator_string(&i),
+strlen(bson_iterator_string(&i)), 1);
                   break;
                 printf("%s\n" ,bson_iterator_string(&i)); break;
                 case bson_null: printf("null\n"); break;
